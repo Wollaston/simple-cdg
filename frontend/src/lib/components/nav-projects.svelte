@@ -67,10 +67,7 @@
             </Sidebar.MenuItem>
         {/each}
         <Sidebar.MenuItem>
-            <Sidebar.MenuButton>
-                <EllipsisIcon />
-                <span>More</span>
-            </Sidebar.MenuButton>
+            <EllipsisIcon />
         </Sidebar.MenuItem>
     </Sidebar.Menu>
 </Sidebar.Group>

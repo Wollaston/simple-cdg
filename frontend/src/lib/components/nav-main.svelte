@@ -2,6 +2,7 @@
     import * as Collapsible from '$lib/components/ui/collapsible/index.js';
     import * as Sidebar from '$lib/components/ui/sidebar/index.js';
     import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+    import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
 
     let {
         items
@@ -64,5 +65,8 @@
                 {/snippet}
             </Collapsible.Root>
         {/each}
+        <Sidebar.MenuItem>
+            <EllipsisIcon />
+        </Sidebar.MenuItem>
     </Sidebar.Menu>
 </Sidebar.Group>

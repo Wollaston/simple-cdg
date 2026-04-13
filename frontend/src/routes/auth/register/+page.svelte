@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { ActionData } from './$types';
-    import LoginForm from '$lib/components/login-form.svelte';
+    import RegisterForm from '$lib/components/auth/register-form.svelte';
 
     let { form }: { form: ActionData } = $props();
 </script>
 
 <div class="flex h-screen w-full items-center justify-center px-4">
-    <LoginForm {form} />
+    <RegisterForm {form} />
 </div>

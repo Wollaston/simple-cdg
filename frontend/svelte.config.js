@@ -18,6 +18,14 @@ const config = {
                 ...config,
                 include: [...config.include, '../drizzle.config.ts']
             })
+        },
+        experimental: {
+            remoteFunctions: true
+        }
+    },
+    compilerOptions: {
+        experimental: {
+            async: true
         }
     }
 };
