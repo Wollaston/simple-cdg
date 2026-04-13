@@ -1,0 +1,20 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "chonkie>=1.6.2",
+    "fastapi[standard]>=0.135.3",
+    "httpx>=0.28.1",
+    "openai>=2.31.0",
+    "opensearch-py>=3.1.0",
+    "psycopg2-binary>=2.9.11",
+    "pydantic>=2.12.5",
+    "sqlmodel>=0.0.38",
+    "tokenizers>=0.22.2",
+]
+
+[tool.fastapi]
+entrypoint = "app.main:app"
