@@ -1,6 +1,19 @@
 services:
-  db:
+  init:
+    image: alpine:latest
+    container_name: init
+    user: root # Ensure root permissions to create folders
+    volumes:
+      - ./:/mnt/host # Mount the current host directory to /mnt/host
+    command: >
+      sh -c "mkdir -p /mnt/host/data && chown 1000:1000 /mnt/host/data  && mkdir -p /mnt/host/opensearch_data && chown 1000:1000 /mnt/host/opensearch_data"
+
+  postgres:
     image: postgres:18.3-trixie
+    container_name: postgres
+    depends_on:
+      init:
+        condition: service_completed_successfully
     restart: always
     ports:
       - 5432:5432
@@ -10,5 +23,74 @@ services:
       POSTGRES_DB: cdg
     volumes:
       - ./data:/var/lib/postgresql
+    networks:
+      - cdg
+  vllm:
+    image: vllm/vllm-openai-cpu:v0.19.0
+    container_name: vllm
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ports:
+      - 8888:8000
+    environment:
+      VLLM_CPU_KVCACHE_SPACE: 4
+      VLLM_CPU_OMP_THREADS_BIND: "0-3"
+    networks:
+      - cdg
+    entrypoint: [ "vllm", "serve", "Qwen/Qwen3-Embedding-0.6B", "--max-model-len", "1024", "--max-num-seqs", "8" ]
+  opensearch:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: opensearch
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    volumes:
+      - ./opensearch_data:/usr/share/opensearch/data # Creates volume called opensearch-data1 and mounts it to the container
+    ports:
+      - 9200:9200 # REST API
+      - 9600:9600 # Performance Analyzer
+    networks:
+      - cdg
+    environment:
+      - DISABLE_SECURITY_PLUGIN=true
+      - cluster.name=opensearch-cluster # Name the cluster
+      - node.name=opensearch # Name the node that will run in this container
+      - discovery.seed_hosts=opensearch # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=opensearch # Nodes eligible to serve as cluster manager
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=root # Sets the demo admin user password when using demo configuration, required for OpenSearch 2.12 and later
+  opensearch-dashboard:
+    image: opensearchproject/opensearch-dashboards:3.6.0
+    container_name: opensearch-dashboard
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ports:
+      - 5601:5601 # Map host port 5601 to container port 5601
+    expose:
+      - "5601" # Expose port 5601 for web access to OpenSearch Dashboards
+    environment:
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: true
+      opensearch.ssl.verificationMode: none
+      data_source.enabled: true
+      workspace.enabled: true
+      explore.enabled: true
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
+    networks:
+      - cdg
+
 volumes:
   pgdata:
+  opensearch_data:
+
+networks:
+  cdg:
