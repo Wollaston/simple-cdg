@@ -1,5 +1,4 @@
 <script lang="ts" module>
-    import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
     import FileSearchCorner from '@lucide/svelte/icons/file-search-corner';
 
     const data = {
@@ -37,7 +36,6 @@
 <script lang="ts">
     import NavMain from './nav-main.svelte';
     import NavProjects from './nav-projects.svelte';
-    import NavUser from './nav-user.svelte';
     import * as Sidebar from '$lib/components/ui/sidebar/index.js';
     import CommandIcon from '@lucide/svelte/icons/command';
     import type { ComponentProps } from 'svelte';
@@ -71,7 +69,4 @@
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
     </Sidebar.Content>
-    <Sidebar.Footer>
-        <NavUser user={data.user} />
-    </Sidebar.Footer>
 </Sidebar.Root>

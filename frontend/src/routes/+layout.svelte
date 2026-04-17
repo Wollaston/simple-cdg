@@ -3,7 +3,7 @@
     import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
     import { Separator } from '$lib/components/ui/separator/index.js';
     import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-
+    import { page } from '$app/state';
     import './layout.css';
     import favicon from '$lib/assets/favicon.svg';
     import { ModeWatcher } from 'mode-watcher';
@@ -14,6 +14,14 @@
     import Button from '$lib/components/ui/button/button.svelte';
 
     let { children } = $props();
+
+    const breadcrumbMap: Record<string, string> = {
+        '/': 'Simple CDG',
+        '/bills': 'Bills',
+        '/bills/search': 'Search Bills',
+        '/bills/view': 'View Bills',
+        '/bills/get': 'Get Bills'
+    };
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
@@ -33,14 +41,11 @@
                         />
                         <Breadcrumb.Root>
                             <Breadcrumb.List>
-                                <Breadcrumb.Item class="hidden md:block">
-                                    <Breadcrumb.Link href="##"
-                                        >Build Your Application</Breadcrumb.Link
-                                    >
-                                </Breadcrumb.Item>
-                                <Breadcrumb.Separator class="hidden md:block" />
                                 <Breadcrumb.Item>
-                                    <Breadcrumb.Page>Data Fetching</Breadcrumb.Page>
+                                    <Breadcrumb.Page
+                                        >{breadcrumbMap[page.route.id] ??
+                                            'Bill Detail'}</Breadcrumb.Page
+                                    >
                                 </Breadcrumb.Item>
                             </Breadcrumb.List>
                         </Breadcrumb.Root>
