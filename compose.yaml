@@ -8,6 +8,49 @@ services:
     command: >
       sh -c "mkdir -p /mnt/host/data && chown 1000:1000 /mnt/host/data  && mkdir -p /mnt/host/opensearch_data && chown 1000:1000 /mnt/host/opensearch_data"
 
+  sveltekit:
+    build:
+      context: ./frontend
+      args:
+        DATABASE_URL: postgresql://root:root@postgres:5432/cdg
+        ORIGIN: http://localhost:3000
+        BACKEND_HOST: fastapi
+        BACKEND_PORT: 8000
+    container_name: sveltekit
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    networks:
+      - cdg
+    ports:
+      - 3000:3000
+    environment:
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      DATABASE_URL: postgresql://root:root@postgres:5432/cdg
+
+  fastapi:
+    build: ./backend
+    container_name: fastapi
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    networks:
+      - cdg
+    ports:
+      - 8000:8000
+    environment:
+      DB_HOST: postgres
+      EMBED_URL: http://vllm:8000/v1
+      OPENSEARCH_HOST: opensearch
+
   postgres:
     image: postgres:18.3-trixie
     container_name: postgres
@@ -25,6 +68,12 @@ services:
       - ./data:/var/lib/postgresql
     networks:
       - cdg
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d cdg"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   vllm:
     image: vllm/vllm-openai-cpu:v0.19.0
     container_name: vllm
@@ -34,11 +83,12 @@ services:
     ports:
       - 8888:8000
     environment:
-      VLLM_CPU_KVCACHE_SPACE: 4
+      VLLM_CPU_KVCACHE_SPACE: 8
       VLLM_CPU_OMP_THREADS_BIND: "0-3"
     networks:
       - cdg
-    entrypoint: [ "vllm", "serve", "Qwen/Qwen3-Embedding-0.6B", "--max-model-len", "1024", "--max-num-seqs", "8" ]
+    entrypoint: [ "vllm", "serve", "sentence-transformers/all-MiniLM-L6-v2", "--max-model-len", "256", "--max-num-seqs", "8", "--dtype", "float16" ]
+
   opensearch:
     image: opensearchproject/opensearch:3.6.0
     container_name: opensearch
@@ -68,6 +118,13 @@ services:
       - bootstrap.memory_lock=true # Disable JVM heap memory swapping
       - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=root # Sets the demo admin user password when using demo configuration, required for OpenSearch 2.12 and later
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s # Recommended to allow startup time
+
   opensearch-dashboard:
     image: opensearchproject/opensearch-dashboards:3.6.0
     container_name: opensearch-dashboard
@@ -94,3 +151,7 @@ volumes:
 
 networks:
   cdg:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24
