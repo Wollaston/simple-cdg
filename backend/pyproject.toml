@@ -13,7 +13,7 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "pydantic>=2.12.5",
     "sqlmodel>=0.0.38",
-    "tokenizers>=0.22.2",
+    "transformers[tokenizers]>=5.5.4",
 ]
 
 [tool.fastapi]

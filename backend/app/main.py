@@ -10,6 +10,7 @@ async def lifespan(_: FastAPI):
     "Context Manager that runs code on startup and shutdown"
     app.state.state = State.from_env()
     yield
+    app.state.state.client.client.close()
 
 
 app = FastAPI(lifespan=lifespan)

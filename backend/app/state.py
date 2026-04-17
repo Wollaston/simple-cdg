@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from fastapi import Request
 
+from app.chunker import Chunker
 from app.client import Client
 from app.db import Db
 from app.embedding import Embedder
@@ -14,6 +15,7 @@ class State:
     embedder: Embedder
     opensearch: OpenSearch
     client: Client
+    chunker: Chunker
 
     @classmethod
     def from_env(cls) -> "State":
@@ -22,6 +24,7 @@ class State:
             embedder=Embedder.from_env(),
             opensearch=OpenSearch.from_env(),
             client=Client.from_env(),
+            chunker=Chunker.from_env(),
         )
 
 
